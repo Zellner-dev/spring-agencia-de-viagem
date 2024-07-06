@@ -1,10 +1,15 @@
 package br.com.zellner.controllers;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,16 +19,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.zellner.models.TravelModel;
+import br.com.zellner.repositories.UserRepository;
 import br.com.zellner.services.TravelService;
+import br.com.zellner.services.UserDetailServiceImpl;
 
 @RestController
 @RequestMapping("/viagens")
 public class TravelController {
 
- private final TravelService viagemService;
+    private final TravelService viagemService;
+    private final UserRepository userRepository;
 
-    public TravelController(TravelService viagemService) {
+    public TravelController(TravelService viagemService, UserRepository userRepository) {
         this.viagemService = viagemService;
+        this.userRepository = userRepository;
     }
 
 	@PostMapping
@@ -33,6 +42,15 @@ public class TravelController {
 
     @GetMapping
     public ResponseEntity<List<TravelModel>> findAllTravels() {
+        UserDetailsService userDetailsService = new UserDetailServiceImpl(userRepository);
+        UserDetails details = userDetailsService.loadUserByUsername("read");
+        System.out.println(details.getUsername());
+        System.out.println(details.getAuthorities());
+        System.out.println(details.getPassword());
+        Collection<SimpleGrantedAuthority> authorities = (Collection<SimpleGrantedAuthority>) SecurityContextHolder.getContext().getAuthentication().getAuthorities(); 
+        // (Collection<SimpleGrantedAuthority>)    SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+        // System.out.println(authorities.toArray().toString());
+        authorities.forEach(authority -> System.out.println(authority.toString()));
         return ResponseEntity.status(HttpStatus.OK).body(viagemService.findAllTravels());
     }
 
@@ -44,6 +62,11 @@ public class TravelController {
 
 	@GetMapping("/id/{id}")	
     public ResponseEntity<TravelModel> findTravelById(@PathVariable int id) {
+        UserDetailsService userDetailsService = new UserDetailServiceImpl(userRepository);
+        UserDetails details = userDetailsService.loadUserByUsername("mike");
+        System.out.println(details.getUsername());
+        System.out.println(details.getAuthorities());
+        System.out.println(details.getPassword());
         return ResponseEntity.status(HttpStatus.OK).body(viagemService.findTravelById(id));
     }
 
